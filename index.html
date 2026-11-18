@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Шашки з обертанням дошки</title>
+    <style>
+        :root {
+            --bg-dark: #0d0e15;
+            --panel-bg: rgba(24, 26, 38, 0.9);
+            --accent: #6c5ce7;
+            --accent-hover: #5849c4;
+            --gold: #fdcb6e;
+            --board-border: #2d3436;
+            --light-square: #dfe6e9;
+            --dark-square: #2d3436;
+            --highlight: rgba(0, 184, 148, 0.85);
+            --selected: rgba(253, 203, 110, 0.95);
+            --text-main: #f5f6fa;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        .screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            text-align: center;
+            color: var(--gold);
+            text-shadow: 0 4px 10px rgba(253, 203, 110, 0.3);
+        }
+
+        .menu-btn {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border-radius: 12px;
+            cursor: pointer;
+            margin: 10px 0;
+            width: 80%;
+            max-width: 300px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(108, 92, 231, 0.4);
+        }
+
+        .menu-btn:hover {
+            background-color: var(--accent-hover);
+            transform: translateY(-2px);
+        }
+
+        /* Ігровий екран */
+        #gameScreen {
+            max-width: 800px;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 480px;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        .coins-display {
+            color: var(--gold);
+        }
+
+        .board-container {
+            position: relative;
+            padding: 10px;
+            background: var(--panel-bg);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transition: transform 0.5s ease;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(8, 60px);
+            grid-template-rows: repeat(8, 60px);
+            border: 4px solid var(--board-border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .square {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .light {
+            background-color: var(--light-square);
+        }
+
+        .dark {
+            background-color: var(--dark-square);
+        }
+
+        .
