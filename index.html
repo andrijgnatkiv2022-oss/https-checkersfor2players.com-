@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Шашки з магазином та класичними правилами</title>
+    <style>
+        :root {
+            --bg-dark: #0d0e15;
+            --panel-bg: rgba(24, 26, 38, 0.95);
+            --accent: #6c5ce7;
+            --accent-hover: #5849c4;
+            --gold: #fdcb6e;
+            --board-border: #2d3436;
+            --light-square: #dfe6e9;
+            --dark-square: #2d3436;
+            --highlight: rgba(0, 184, 148, 0.85);
+            --selected: rgba(253, 203, 110, 0.95);
+            --text-main: #f5f6fa;
+            
+            --piece-1-bg: radial-gradient(circle at 30% 30%, #ffffff, #dcdde1);
+            --piece-1-border: #bdc3c7;
+            --piece-2-bg: radial-gradient(circle at 30% 30%, #485460, #1e272c);
+            --piece-2-border: #111;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        .screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+        }
+
+        .screen.hidden {
+            display: none !important;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            text-align: center;
+            color: var(--gold);
+            text-shadow: 0 4px 10px rgba(253, 203, 110, 0.3);
+        }
+
+        .menu-btn {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border-radius: 12px;
+            cursor: pointer;
+            margin: 10px 0;
+            width: 80%;
+            max-width: 300px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(108, 92, 231, 0.4);
+        }
+
+        .menu-btn:hover {
+            background-color: var(--accent-hover);
+            transform: translateY(-2px);
+        }
+
+        .menu-btn.secondary {
+            background-color: #2f3640;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        .menu-btn.secondary:hover {
+            background-color: #353b48;
+        }
+
+        /* МАГАЗИН */
+        .shop-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 20px;
+        }
+
+        .shop-item {
+            background: var(--panel-bg);
+            border: 2px solid rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .shop-item.active {
+            border-color: var(--gold);
+        }
+
+        .shop-info h3 {
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .shop-info p {
+            font-size: 0.9rem;
+            color: var(--gold);
+        }
+
+        .shop-action-btn {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .shop-action-btn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .shop-action-btn.owned {
+            background-color: #27ae60;
+        }
+
+        /* ІГРОВИЙ ЕКРАН */
+        #gameScreen {
+            max-width: 800px;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 480px;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        .coins-display {
+            color: var(--gold);
+        }
+
+        .board-container {
+            position: relative;
+            padding: 10px;
+            background: var(--panel-bg);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transition: transform 0.5s ease;
+        }
+
+        .board-container.flipped {
+            transform: rotate(180deg);
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(8, 60px);
+            grid-template-rows: repeat(8, 60px);
+            border: 4px solid var(--board-border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .square {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .light {
+            background-color: var(--light-square);
+        }
+
+        .dark {
+            background-color: var(--dark-square);
+        }
+
+        .square.highlight::after {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background-color: var(--highlight);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .square.capture-highlight::after {
+            background-color: #ff4757;
+            box-shadow: 0 0 10px #ff4757;
+        }
+
+        .square.selected {
+            background-color: var(--selected) !important;
+        }
+
+        .piece {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: inset 0 3px 6px rgba(255,255,255,0.4), 0 4px 8px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+        }
+
+        .board-container.flipped .piece {
+            transform: rotate(180deg);
+        }
+
+        .piece:hover {
+            transform: scale(1.05);
+        }
+
+        .board-container.flipped .piece:hover {
+            transform: rotate(180deg) scale(1.05);
+        }
+
+        .piece.player1 {
+            background: var(--piece-1-bg);
+            border: 2px solid var(--piece-1-border);
+        }
+
+        .piece.player2 {
+            background: var(--piece-2-bg);
+            border: 2px solid var(--piece-2-border);
+        }
+
+        .piece.king::after {
+            content: '👑';
+            font-size: 22px;
+        }
+
+        /* МОДАЛЬНЕ ВІКНО */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.hidden {
+            display: none !important;
+        }
+
+        .modal-content {
+            background: var(--panel-bg);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            border: 2px solid var(--gold);
+            box-shadow: 0 10px 30px rgba(253, 203, 110, 0.2);
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .modal-content h2 {
+            color: var(--gold);
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .modal-content p {
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ЕКРАН МЕНЮ -->
+    <div id="menuScreen" class="screen">
+        <h1>ШАШКИ</h1>
+        <button class="menu-btn" onclick="startGame()">Грати проти друга</button>
+        <button class="menu-btn secondary" onclick="openShop()">Магазин скінів</button>
+        <div style="margin-top: 20px; font-size: 1.1rem;">Монети: <span id="menuCoins" style="color: var(--gold);">100</span> 🪙</div>
+    </div>
+
+    <!-- ЕКРАН МАГАЗИНУ -->
+    <div id="shopScreen" class="screen hidden">
+        <h1>МАГАЗИН</h1>
+        <div class="shop-container" id="shopList"></div>
+        <div style="margin-bottom: 15px; font-size: 1.1rem;">Баланс: <span id="shopCoins" style="color: var(--gold);">100</span> 🪙</div>
+        <button class="menu-btn secondary" onclick="closeShop()">Назад у меню</button>
+    </div>
+
+    <!-- ІГРОВИЙ ЕКРАН -->
+    <div id="gameScreen" class="screen hidden">
+        <div class="game-header">
+            <span id="turnInfo">Хід білих</span>
+            <span class="coins-display">🪙 <span id="gameCoins">100</span></span>
+        </div>
+        
+        <div class="board-container" id="boardContainer">
+            <div class="board" id="board"></div>
+        </div>
+
+        <button class="menu-btn secondary" style="margin-top: 20px; background: #e74c3c;" onclick="returnToMenu()">Здатися / Меню</button>
+    </div>
+
+    <!-- ВІКНО ПЕРЕМОГИ -->
+    <div id="winModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2>Перемога!</h2>
+            <p id="winText">Чудова партія!</p>
+            <p style="color: var(--gold); margin-bottom: 20px;">Нагорода за матч: +50 🪙</p>
+            <button class="menu-btn" onclick="returnToMenu()">В головне меню</button>
+        </div>
+    </div>
+
+    <script>
+        let coins = parseInt(localStorage.getItem('checkers_coins')) || 100;
+        let ownedSkins = JSON.parse(localStorage.getItem('checkers_owned')) || ['classic'];
+        let currentSkin = localStorage.getItem('checkers_skin') || 'classic';
+
+        const skinsData = {
+            classic: { name: 'Класичні', cost: 0, p1Bg: 'radial-gradient(circle at 30% 30%, #ffffff, #dcdde1)', p1Border: '#bdc3c7', p2Bg: 'radial-gradient(circle at 30% 30%, #485460, #1e272c)', p2Border: '#111' },
+            neon: { name: 'Неон Кібер', cost: 150, p1Bg: 'radial-gradient(circle at 30% 30%, #00cec9, #0984e3)', p1Border: '#00ffe7', p2Bg: 'radial-gradient(circle at 30% 30%, #e84393, #d63031)', p2Border: '#ff007f' },
+            gold: { name: 'Золотий Королівський', cost: 300, p1Bg: 'radial-gradient(circle at 30% 30%, #ffeaa7, #fdcb6e)', p1Border: '#e1b12c', p2Bg: 'radial-gradient(circle at 30% 30%, #2d3436, #000000)', p2Border: '#fdcb6e' }
+        };
+
+        let boardState = [];
+        let turn = 'white';
+        let selectedPiece = null;
+        let validMoves = [];
+        let mustContinueCapture = false;
+
+        function updateCoinsDisplay() {
+            document.getElementById('menuCoins').innerText = coins;
+            document.getElementById('shopCoins').innerText = coins;
+            document.getElementById('gameCoins').innerText = coins;
+            localStorage.setItem('checkers_coins', coins);
+            localStorage.setItem('checkers_owned', JSON.stringify(ownedSkins));
+            localStorage.setItem('checkers_skin', currentSkin);
+            applySkinStyles();
+        }
+
+        function applySkinStyles() {
+            const skin = skinsData[currentSkin];
+            const root = document.documentElement;
+            root.style.setProperty('--piece-1-bg', skin.p1Bg);
+            root.style.setProperty('--piece-1-border', skin.p1Border);
+            root.style.setProperty('--piece-2-bg', skin.p2Bg);
+            root.style.setProperty('--piece-2-border', skin.p2Border);
+        }
+
+        function openShop() {
+            document.getElementById('menuScreen').classList.add('hidden');
+            document.getElementById('shopScreen').classList.remove('hidden');
+            renderShop();
+        }
+
+        function closeShop() {
+            document.getElementById('shopScreen').classList.add('hidden');
+            document.getElementById('menuScreen').classList.remove('hidden');
+            updateCoinsDisplay();
+        }
+
+        function renderShop() {
+            const shopList = document.getElementById('shopList');
+            shopList.innerHTML = '';
+
+            for (let key in skinsData) {
+                const skin = skinsData[key];
+                const isOwned = ownedSkins.includes(key);
+                const isActive = currentSkin === key;
+
+                const item = document.createElement('div');
+                item.className = `shop-item ${isActive ? 'active' : ''}`;
+                
+                item.innerHTML = `
+                    <div class="shop-info">
+                        <h3>${skin.name}</h3>
+                        <p>${isOwned ? (isActive ? 'Використовується' : 'Куплено') : skin.cost + ' 🪙'}</p>
+                    </div>
+                    <button class="shop-action-btn ${isOwned ? 'owned' : ''}" onclick="handleSkinAction('${key}')">
+                        ${isActive ? 'Обрано' : (isOwned ? 'Обрати' : 'Купити')}
+                    </button>
+                `;
+                shopList.appendChild(item);
+            }
+        }
+
+        function handleSkinAction(key) {
+            const skin = skinsData[key];
+            if (ownedSkins.includes(key)) {
+                currentSkin = key;
+            } else {
+                if (coins >= skin.cost) {
+                    coins -= skin.cost;
+                    ownedSkins.push(key);
+                    currentSkin = key;
+                } else {
+                    alert('Недостатньо монет!');
+                }
+            }
+            updateCoinsDisplay();
+            renderShop();
+        }
+
+        function startGame() {
+            document.getElementById('menuScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+            turn = 'white';
+            selectedPiece = null;
+            validMoves = [];
+            mustContinueCapture = false;
+            document.getElementById('turnInfo').innerText = 'Хід білих';
+            document.getElementById('boardContainer').classList.remove('flipped');
+            initBoard();
+            renderBoard();
+            updateCoinsDisplay();
+        }
+
+        function returnToMenu() {
+            document.getElementById('winModal').classList.add('hidden');
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('menuScreen').classList.remove('hidden');
+            updateCoinsDisplay();
+        }
+
+        function initBoard() {
+            boardState = Array(8).fill(null).map(() => Array(8).fill(null));
+            for (let r = 0; r < 3; r++) {
+                for (let c = 0; c < 8; c++) {
+                    if ((r + c) % 2 === 1) {
+                        boardState[r][c] = { player: 'black', king: false };
+                    }
+                }
+            }
+            for (let r = 5; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    if ((r + c) % 2 === 1) {
+                        boardState[r][c] = { player: 'white', king: false };
+                    }
+                }
+            }
+        }
+
+        function renderBoard() {
+            const boardEl = document.getElementById('board');
+            boardEl.innerHTML = '';
+
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    const square = document.createElement('div');
+                    square.classList.add('square');
+                    square.classList.add((r + c) % 2 === 0 ? 'light' : 'dark');
+
+                    const move = validMoves.find(m => m.r === r && m.c === c);
+                    if (move) {
+                        square.classList.add('highlight');
+                        if (move.jumpR !== undefined) {
+                            square.classList.add('capture-highlight');
+                        }
+                    }
+                    if (selectedPiece && selectedPiece.r === r && selectedPiece.c === c) {
+                        square.classList.add('selected');
+                    }
+
+                    const piece = boardState[r][c];
+                    if (piece) {
+                        const pieceEl = document.createElement('div');
+                        pieceEl.classList.add('piece', piece.player === 'white' ? 'player1' : 'player2');
+                        if (piece.king) pieceEl.classList.add('king');
+                        square.appendChild(pieceEl);
+                    }
+
+                    square.addEventListener('click', () => handleSquareClick(r, c));
+                    boardEl.appendChild(square);
+                }
+            }
+        }
+
+        function handleSquareClick(r, c) {
+            const piece = boardState[r][c];
+            const move = validMoves.find(m => m.r === r && m.c === c);
+            
+            if (move) {
+                executeMove(selectedPiece.r, selectedPiece.c, r, c, move.jumpR, move.jumpC);
+                return;
+            }
+
+            // Під час серії ударів не можна переключатися на іншу фішку
+            if (mustContinueCapture) return;
+
+            if (piece && piece.player === turn) {
+                selectedPiece = { r, c };
+                validMoves = getValidMoves(r, c);
+                renderBoard();
+            } else {
+                selectedPiece = null;
+                validMoves = [];
+                renderBoard();
+            }
+        }
+
+        function getValidMoves(r, c, onlyCaptures = false) {
+            const piece = boardState[r][c];
+            if (!piece) return [];
+            
+            let captures = [];
+            let normalMoves = [];
+            const allDiagonals = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+
+            if (!piece.king) {
+                // ЗВИЧАЙНА ШАШКА:
+                // 1. Звичайний хід - лише вперед
+                const forwardDir = piece.player === 'white' ? -1 : 1;
+                if (!onlyCaptures) {
+                    [-1, 1].forEach(dc => {
+                        let nr = r + forwardDir;
+                        let nc = c + dc;
+                        if (isValidCoord(nr, nc) && !boardState[nr][nc]) {
+                            normalMoves.push({ r: nr, c: nc });
+                        }
+                    });
+                }
+
+                // 2. Побиття - у ВСІ 4 сторони (і вперед, і назад!)
+                allDiagonals.forEach(([dr, dc]) => {
+                    let midR = r + dr;
+                    let midC = c + dc;
+                    let landR = r + dr * 2;
+                    let landC = c + dc * 2;
+
+                    if (isValidCoord(landR, landC)) {
+                        const midPiece = boardState[midR][midC];
+                        if (midPiece && midPiece.player !== piece.player && !boardState[landR][landC]) {
+                            captures.push({ r: landR, c: landC, jumpR: midR, jumpC: midC });
+                        }
+                    }
+                });
+            } else {
+                // ЛІТАЮЧА ДАМКА (ходить по всьому іксу):
+                allDiagonals.forEach(([dr, dc]) => {
+                    let step = 1;
+                    let enemyFound = null;
+
+                    while (true) {
+                        let nr = r + dr * step;
+                        let nc = c + dc * step;
+                        if (!isValidCoord(nr, nc)) break;
+
+                        const cell = boardState[nr][nc];
+
+                        if (!enemyFound) {
+                            if (!cell) {
+                                // Вільна клітинка до ворога
+                                if (!onlyCaptures) {
+                                    normalMoves.push({ r: nr, c: nc });
+                                }
+                            } else if (cell.player === piece.player) {
+                                // Вперлися у свою шашку
+                                break;
+                            } else {
+                                // Знайшли шашку суперника
+                                enemyFound = { r: nr, c: nc };
+                            }
+                        } else {
+                            // Клітинки ПІСЛЯ шашки суперника
+                            if (!cell) {
+                                captures.push({ r: nr, c: nc, jumpR: enemyFound.r, jumpC: enemyFound.c });
+                            } else {
+                                // Зустріли другу фігуру підряд - перестрибнути не можна
+                                break;
+                            }
+                        }
+                        step++;
+                    }
+                });
+            }
+
+            return onlyCaptures ? captures : [...captures, ...normalMoves];
+        }
+
+        function isValidCoord(r, c) {
+            return r >= 0 && r < 8 && c >= 0 && c < 8;
+        }
+
+        function executeMove(fromR, fromC, toR, toC, jumpR, jumpC) {
+            const movingPiece = boardState[fromR][fromC];
+            boardState[toR][toC] = movingPiece;
+            boardState[fromR][fromC] = null;
+
+            const didCapture = jumpR !== undefined && jumpC !== undefined;
+            if (didCapture) {
+                boardState[jumpR][jumpC] = null;
+            }
+
+            // Перетворення на дамку при досягненні останньої горизонталі
+            if (movingPiece.player === 'white' && toR === 0) movingPiece.king = true;
+            if (movingPiece.player === 'black' && toR === 7) movingPiece.king = true;
+
+            // Перевірка на продовження серії ударів (ланцюгове побиття)
+            if (didCapture) {
+                const nextCaptures = getValidMoves(toR, toC, true);
+                if (nextCaptures.length > 0) {
+                    mustContinueCapture = true;
+                    selectedPiece = { r: toR, c: toC };
+                    validMoves = nextCaptures;
+                    checkWinCondition();
+                    renderBoard();
+                    return;
+                }
+            }
+
+            // Завершення ходу
+            mustContinueCapture = false;
+            selectedPiece = null;
+            validMoves = [];
+
+            turn = turn === 'white' ? 'black' : 'white';
+            document.getElementById('turnInfo').innerText = turn === 'white' ? 'Хід білих' : 'Хід чорних';
+            
+            const container = document.getElementById('boardContainer');
+            if (turn === 'black') {
+                container.classList.add('flipped');
+            } else {
+                container.classList.remove('flipped');
+            }
+
+            checkWinCondition();
+            renderBoard();
+        }
+
+        function checkWinCondition() {
+            let whiteCount = 0;
+            let blackCount = 0;
+
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    if (boardState[r][c]?.player === 'white') whiteCount++;
+                    if (boardState[r][c]?.player === 'black') blackCount++;
+                }
+            }
+
+            if (whiteCount === 0 || blackCount === 0) {
+                const winner = whiteCount === 0 ? 'Чорні' : 'Білі';
+                document.getElementById('winText').innerText = `Перемогли ${winner}!`;
+                document.getElementById('winModal').classList.remove('hidden');
+                coins += 50;
+                updateCoinsDisplay();
+            }
+        }
+
+        updateCoinsDisplay();
+    </script>
+</body>
+</html>
